@@ -3,10 +3,17 @@ import { post, get } from '../decorator/router';
 import axios from 'axios';
 import { OAUTH_CLIENT_ID, OAUTH_SECRET_KEY, ACCESS_TOKEN_URL } from '../utils/const';
 
+let githubInfo = '';
 /**
  * @Controller 管理端->用户模块
  */
 export default class User extends Controller {
+
+  @get('/user/github/info')
+  getGithubInfo() {
+    const { ctx } = this;
+    ctx.helper.success({ ctx, data: githubInfo, message: '请求成功！' });
+  }
   /**
    * @summary github 授权登录
    * @description 用github登录
@@ -18,7 +25,7 @@ export default class User extends Controller {
   public async oauthLogin() {
     const sendClientMes = [ 'login', 'avatar_url', 'id', 'html_url', 'name' ];
     const { ctx } = this;
-    const { code } = ctx.request.query;
+    const { code, path } = ctx.request.query;
     const acccessTokenUrl = `${ACCESS_TOKEN_URL}client_id=${OAUTH_CLIENT_ID}&client_secret=${OAUTH_SECRET_KEY}&code=${code}`;
     const access_token = await axios({
       method: 'post',
@@ -37,9 +44,13 @@ export default class User extends Controller {
     sendClientMes.forEach(item => {
       cookies[item] = res[item];
     });
-    ctx.cookies.set('githubInfo', JSON.stringify(cookies));
+    ctx.cookies.set('githubInfo', githubInfo = JSON.stringify(cookies), {
+      path: '/',
+    });
+
     ctx.status = 302;
-    ctx.redirect('http://127.0.0.1:5000/home');
+    /* 开发环境先这么处理 */
+    ctx.redirect('http://127.0.0.1:5000' + path);
   }
   /**
    * @summary oauth登录 - github
@@ -50,10 +61,12 @@ export default class User extends Controller {
    */
   @post('/user/github/oauth')
   public async oauthLoginGithub() {
-    const redirect_uri = 'http://127.0.0.1:7001/user/get/oauth';
+    const { ctx } = this;
+    let { pathname, id } = ctx.request.query;
+    if (pathname === '/blog/detail') pathname += '?id=' + id;
+    const redirect_uri = 'http://127.0.0.1:7001/user/get/oauth?path=' + pathname;
     const githubAuthorizeUrl = 'http://github.com/login/oauth/authorize?';
     const url = `${githubAuthorizeUrl}client_id=${OAUTH_CLIENT_ID}&redirect_uri=${redirect_uri}`;
-    const { ctx } = this;
     ctx.helper.redirect({ ctx, data: url, message: '重定向' });
   }
   /**

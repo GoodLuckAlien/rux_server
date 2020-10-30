@@ -54,6 +54,59 @@ export default class Doc extends Controller {
       }
     }
   }
+  private async getStarNumber(cid) {
+    const { service } = this;
+    const result = await service.doc.getStarAllEecord(cid);
+    return result.length;
+  }
+  /**
+   * @summary 获取点赞数量
+   * @description 获取文档点赞数量
+   * @router get /doc/:id/star
+   * @request path
+   * @response 200 baseResponse 创建成功
+   */
+  @get('/doc/:id/star')
+  public async apiGetStarNumber() {
+    const { ctx } = this;
+    const { id } = ctx.params;
+    const number = await this.getStarNumber(id);
+    ctx.helper.success({ ctx, data: number, message: '请求成功！' });
+  }
+  /**
+   * @summary 点赞/取消点赞
+   * @description 获取配置菜单列表
+   * @router post /doc/doc/star
+   * @request path
+   * @response 200 baseResponse 创建成功
+   */
+  @post('/doc/doc/star')
+  public async postDocStar() {
+    const { ctx, service } = this;
+    const { gid, cid } = ctx.request.body;
+    const payload = { gid, cid };
+    const result: any = await service.doc.getStarEecord(payload);
+
+    if (result) { /* 取消点赞 */
+      const deleteId = result.dataValues.id;
+      const deleteResult = await service.doc.deleteStarEecord(deleteId);
+      if (deleteResult) {
+        const resultNumber = await this.getStarNumber(cid);
+        ctx.helper.success({ ctx, data: resultNumber, message: '请求成功！' });
+      } else {
+        return ctx.helper.fail({ ctx, data: null, message: '网络错误！' });
+      }
+    } else { /* 点赞 */
+      const createResult = await service.doc.createStarEecord(payload);
+      if (createResult) {
+        const resultNumber = await this.getStarNumber(cid);
+        ctx.helper.success({ ctx, data: resultNumber, message: '请求成功！' });
+      } else {
+        return ctx.helper.fail({ ctx, data: null, message: '网络错误！' });
+      }
+    }
+
+  }
   /**
    * @summary 获取文章指南列表
    * @description 获取配置菜单列表

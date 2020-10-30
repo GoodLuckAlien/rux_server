@@ -45,8 +45,37 @@ class Doc extends Service {
       },
     });
   }
+  /**
+   * 点赞/取消点赞
+   */
+  async getStarEecord(payload) {
+    return await this.ctx.model.models.star.findOne({ where: payload });
+  }
+  /**
+   * 创建点赞记录
+   */
+  async createStarEecord(payload) {
+    return await this.ctx.model.models.star.create(payload);
+  }
+  /* 删除记录 */
+  async deleteStarEecord(id) {
+    return await this.ctx.model.models.star.destroy({
+      where: {
+        id,
+      },
+    });
+  }
+  /**
+   * 获取文档所有记录
+   */
+  async getStarAllEecord(cid) {
+    return await this.ctx.model.models.star.findAll({
+      where: {
+        cid,
+      },
+    });
+  }
 }
-
 
 export default Doc
 ;
